@@ -1,7 +1,7 @@
 const API = 'api';
 const STATUSES = ['Draft','Submitted','Interview','Offer','Rejected','Withdrawn'];
 
-let apps = [], cycles = [], companies = [], cities = [];
+let apps = [], cycles = [], companies = [], cities = [], profile = {};
 let editingId = null;
 let sortCol = 'created_at', sortDir = 'desc';
 
@@ -14,11 +14,12 @@ async function apiFetch(path, opts = {}) {
 }
 
 async function loadAll() {
-    [apps, cycles, companies, cities] = await Promise.all([
+    [apps, cycles, companies, cities, profile] = await Promise.all([
         apiFetch('applications.php'),
         apiFetch('cycles.php'),
         apiFetch('companies.php'),
         apiFetch('cities.php'),
+        apiFetch('profile.php'),
     ]);
 }
 
@@ -38,6 +39,13 @@ function showPage(id) {
 }
 
 // dashboard
+function greeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good Morning';
+    if (h < 18) return 'Good Afternoon';
+    return 'Good Evening';
+}
+
 function populateDashFilters() {
     document.getElementById('dash-filter-cycle').innerHTML =
         '<option value="">All Cycles</option>' +
@@ -48,6 +56,9 @@ function populateDashFilters() {
 }
 
 function renderDashboard() {
+    const name = profile.first_name ? `${profile.first_name} ${profile.last_name}` : '';
+    document.getElementById('dash-title').textContent = `${greeting()}, ${name}`;
+
     const total     = apps.length;
     const offer     = apps.filter(a => a.status === 'Offer').length;
     const interview = apps.filter(a => a.status === 'Interview').length;
@@ -431,6 +442,19 @@ function badge(status) {
     const map = { 'Draft':'applied','Submitted':'phone','Interview':'interview','Offer':'offer','Rejected':'rejected','Withdrawn':'withdrawn' };
     return `<span class="badge badge-${map[status] || 'applied'}">${esc(status)}</span>`;
 }
+
+// sidebar
+function toggleSidebar() {
+    document.querySelector('.app').classList.toggle('nav-open');
+}
+
+function closeSidebar() {
+    document.querySelector('.app').classList.remove('nav-open');
+}
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 600) closeSidebar();
+});
 
 // init
 showPage('dashboard');

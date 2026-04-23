@@ -14,14 +14,25 @@ $user_id = (int)$_SESSION['user_id'];
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="app">
 
+<!-- mobile top bar -->
+<div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+    <span class="topbar-logo">JobTracker</span>
+</div>
+
+<!-- mobile overlay -->
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app">
     <aside class="sidebar">
-        <div class="sidebar-logo">JobTracker</div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">JobTracker</div>
+        </div>
         <nav class="sidebar-nav">
-            <div class="nav-item" data-page="dashboard"    onclick="showPage('dashboard')"><span>Dashboard</span></div>
-            <div class="nav-item" data-page="info"         onclick="showPage('info')"><span>Info</span></div>
-            <div class="nav-item" data-page="profile"      onclick="showPage('profile')"><span>Profile</span></div>
+            <div class="nav-item" data-page="dashboard" onclick="showPage('dashboard')"><span>Dashboard</span></div>
+            <div class="nav-item" data-page="info"      onclick="showPage('info')"><span>Info</span></div>
+            <div class="nav-item" data-page="profile"   onclick="showPage('profile')"><span>Profile</span></div>
         </nav>
     </aside>
 
@@ -30,43 +41,45 @@ $user_id = (int)$_SESSION['user_id'];
         <!-- DASHBOARD -->
         <div id="page-dashboard" class="page">
             <div class="page-header">
-                <h1 class="page-title">Dashboard</h1>
+                <h1 class="page-title" id="dash-title">Dashboard</h1>
                 <div class="btn-group">
                     <button class="btn btn-ghost" onclick="exportData('csv')">Download CSV</button>
                     <button class="btn btn-ghost" onclick="exportData('json')">Download JSON</button>
                 </div>
             </div>
             <div class="stats-grid">
-                <div class="stat-card accent"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
+                <div class="stat-card"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
                 <div class="stat-card success"><div class="label">Offers</div><div class="value" id="stat-offer">—</div></div>
                 <div class="stat-card warning"><div class="label">Interviews</div><div class="value" id="stat-interview">—</div></div>
                 <div class="stat-card danger"><div class="label">Rejected</div><div class="value" id="stat-rejected">—</div></div>
             </div>
             <div class="table-wrap">
                 <div class="filters">
-                    <span style="font-weight:600;font-size:13px;margin-right:6px">My Applications</span>
+                    <span class="filters-label">My Applications</span>
                     <select id="dash-filter-cycle"  class="filter-select" onchange="renderDashboardApps()"></select>
                     <select id="dash-filter-status" class="filter-select" onchange="renderDashboardApps()"></select>
                     <button class="btn btn-primary btn-sm" onclick="openAddModal()" style="margin-left:auto">+ Add</button>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Role</th>
-                            <th>Company</th>
-                            <th>Status</th>
-                            <th>Cycle</th>
-                            <th>Location</th>
-                            <th>Date</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="dash-app-tbody"></tbody>
-                </table>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th class="hide-sm">Cycle</th>
+                                <th class="hide-sm">Location</th>
+                                <th class="hide-xs">Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-app-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- INFO (My Companies / My Cities / My Cycles) -->
+        <!-- INFO -->
         <div id="page-info" class="page">
             <div class="page-header"><h1 class="page-title">Info</h1></div>
             <div class="subtab-bar">
@@ -74,46 +87,46 @@ $user_id = (int)$_SESSION['user_id'];
                 <button class="subtab"        data-subtab="my-cities"    onclick="showInfoTab('my-cities')">My Cities</button>
                 <button class="subtab"        data-subtab="my-cycles"    onclick="showInfoTab('my-cycles')">My Cycles</button>
             </div>
-
-            <!-- My Companies -->
             <div id="subtab-my-companies" class="subtab-content">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div class="subtab-toolbar">
                     <span style="color:var(--text-muted);font-size:13px">Companies from your applications.</span>
                     <button class="btn btn-primary btn-sm" onclick="openAddCompanyModal()">+ Add Company</button>
                 </div>
                 <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Company</th><th style="text-align:right">Applications</th><th></th></tr></thead>
-                        <tbody id="my-co-tbody"></tbody>
-                    </table>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>Company</th><th style="text-align:right">Applications</th><th></th></tr></thead>
+                            <tbody id="my-co-tbody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
-            <!-- My Cities -->
             <div id="subtab-my-cities" class="subtab-content" style="display:none">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div class="subtab-toolbar">
                     <span style="color:var(--text-muted);font-size:13px">Cities from your applications.</span>
                     <button class="btn btn-primary btn-sm" onclick="openAddCityModal()">+ Add City</button>
                 </div>
                 <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>City</th><th>State</th><th style="text-align:right">Applications</th><th></th></tr></thead>
-                        <tbody id="my-ci-tbody"></tbody>
-                    </table>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>City</th><th class="hide-xs">State</th><th style="text-align:right">Applications</th><th></th></tr></thead>
+                            <tbody id="my-ci-tbody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-
-            <!-- My Cycles -->
             <div id="subtab-my-cycles" class="subtab-content" style="display:none">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div class="subtab-toolbar">
                     <span style="color:var(--text-muted);font-size:13px">Cycles from your applications.</span>
                     <button class="btn btn-primary btn-sm" onclick="openAddCycleModal()">+ Add Cycle</button>
                 </div>
                 <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Cycle</th><th style="text-align:right">Applications</th><th></th></tr></thead>
-                        <tbody id="my-cy-tbody"></tbody>
-                    </table>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>Cycle</th><th style="text-align:right">Applications</th><th></th></tr></thead>
+                            <tbody id="my-cy-tbody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
