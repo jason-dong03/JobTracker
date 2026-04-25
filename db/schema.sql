@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS schools (
 
 CREATE TABLE IF NOT EXISTS application_cycles (
     cycle_id   INT AUTO_INCREMENT PRIMARY KEY,
-    cycle_name VARCHAR(100) NOT NULL UNIQUE
+    user_id    INT NULL,
+    cycle_name VARCHAR(100) NOT NULL,
+    UNIQUE (user_id, cycle_name),
+    CONSTRAINT fk_application_cycles_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS cities (
@@ -107,8 +110,6 @@ CREATE TABLE IF NOT EXISTS user_connections (
 );
 
 -- seed
-INSERT IGNORE INTO application_cycles (cycle_name) VALUES
-('Summer 2025'), ('Fall 2025'), ('Spring 2026'), ('Summer 2026'), ('Full-Time 2026');
 
 INSERT IGNORE INTO companies (company_name) VALUES
 ('Google'), ('Meta'), ('Amazon'), ('Apple'), ('Microsoft'),
@@ -119,3 +120,24 @@ INSERT IGNORE INTO cities (city_name, state_name) VALUES
 ('Austin', 'TX'), ('Boston', 'MA'), ('Chicago', 'IL'),
 ('Los Angeles', 'CA'), ('Denver', 'CO'), ('Atlanta', 'GA'),
 ('Remote', '');
+
+INSERT IGNORE INTO schools (school_name) VALUES
+('University of Virginia'),
+('Virginia Tech'),
+('George Mason University'),
+('James Madison University'),
+('College of William & Mary'),
+('Virginia Commonwealth University'),
+('Old Dominion University'),
+('Liberty University'),
+('Harvard University'),
+('Stanford University'),
+('Massachusetts Institute of Technology'),
+('Yale University'),
+('Princeton University'),
+('UC Berkeley'),
+('Georgia Institute of Technology'),
+('Carnegie Mellon University'),
+('Cornell University'),
+('University of Michigan'),
+('Purdue University');

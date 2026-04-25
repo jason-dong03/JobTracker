@@ -57,6 +57,12 @@ if ($method === 'GET' && $id) {
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     if (!$row) json_response(['error' => 'Not found'], 404);
+    $stmt2 = $db->prepare("SELECT doc_id FROM application_documents WHERE application_id = ?");
+    $stmt2->bind_param('i', $id);
+    $stmt2->execute();
+    $docs = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
+    $row['document_ids'] = array_column($docs, 'doc_id');
+
     json_response($row);
 }
 
@@ -75,6 +81,14 @@ if ($method === 'POST') {
         $stmt2->bind_param('ii', $user_id, $app_id);
         $stmt2->execute();
 
+        if (isset($d['document_ids']) && is_array($d['document_ids'])) {
+            $stmt3 = $db->prepare("INSERT INTO application_documents (application_id, doc_id) VALUES (?, ?)");
+            foreach ($d['document_ids'] as $doc_id) {
+                $stmt3->bind_param('ii', $app_id, $doc_id);
+                $stmt3->execute();
+            }
+        }
+
         $db->commit();
         json_response(['application_id' => $app_id], 201);
     } catch (Exception $e) {
@@ -85,13 +99,33 @@ if ($method === 'POST') {
 
 if ($method === 'PUT' && $id) {
     $d = get_input();
-    $stmt = $db->prepare(
-        "UPDATE applications SET role_title=?, status=?, company_id=?, city_id=?, cycle_id=?
-         WHERE application_id=?"
-    );
-    $stmt->bind_param('ssiiii', $d['role_title'], $d['status'], $d['company_id'], $d['city_id'], $d['cycle_id'], $id);
-    $stmt->execute();
-    json_response(['updated' => $stmt->affected_rows]);
+    $db->begin_transaction();
+    try {
+        $stmt = $db->prepare(
+            "UPDATE applications SET role_title=?, status=?, company_id=?, city_id=?, cycle_id=?
+             WHERE application_id=?"
+        );
+        $stmt->bind_param('ssiiii', $d['role_title'], $d['status'], $d['company_id'], $d['city_id'], $d['cycle_id'], $id);
+        $stmt->execute();
+
+        $stmt_del = $db->prepare("DELETE FROM application_documents WHERE application_id = ?");
+        $stmt_del->bind_param('i', $id);
+        $stmt_del->execute();
+        
+        if (isset($d['document_ids']) && is_array($d['document_ids'])) {
+            $stmt_add = $db->prepare("INSERT INTO application_documents (application_id, doc_id) VALUES (?, ?)");
+            foreach ($d['document_ids'] as $doc_id) {
+                $stmt_add->bind_param('ii', $id, $doc_id);
+                $stmt_add->execute();
+            }
+        }
+
+        $db->commit();
+        json_response(['updated' => true]);
+    } catch (Exception $e) {
+        $db->rollback();
+        json_response(['error' => $e->getMessage()], 500);
+    }
 }
 
 if ($method === 'DELETE' && $id) {

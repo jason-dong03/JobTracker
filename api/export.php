@@ -20,14 +20,5 @@ $sql = "SELECT a.application_id, a.role_title, a.status, a.created_at,
 
 $result = $db->query($sql)->fetch_all(MYSQLI_ASSOC);
 
-if ($format === 'csv') {
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="applications.csv"');
-    $out = fopen('php://output', 'w');
-    if (!empty($result)) fputcsv($out, array_keys($result[0]));
-    foreach ($result as $row) fputcsv($out, $row);
-    fclose($out);
-    exit;
-}
 
 json_response($result);
