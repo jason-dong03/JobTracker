@@ -795,6 +795,14 @@ tr.drag-over td {
     background: transparent;
     color: var(--text-dim);
 }
+.doc-app-more {
+    cursor: pointer;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
+}
+.doc-app-more:hover {
+    background: rgba(255,255,255,0.15);
+}
 
 /* tablet */
 @media (max-width: 1024px) {

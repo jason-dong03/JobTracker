@@ -318,14 +318,10 @@ $user_id = (int)$_SESSION['user_id'];
             </div>
             <div class="form-group">
                 <label class="form-label">Documents</label>
-                <div class="inline-add-row">
-                    <select id="f-docs" multiple style="height:80px;"></select>
-                </div>
-                <div style="margin-top:8px; font-size:13px; color:var(--text-muted);">
-                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple.
-                    Or upload a new one: 
-                    <input type="file" id="modal-doc-file" style="max-width:180px;">
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="uploadModalDocument()">Upload</button>
+                <div id="f-docs-checkboxes" style="padding:4px 0;text-align:left;display:flex;flex-direction:column;align-items:flex-start;"></div>
+                <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                    <input type="file" id="modal-doc-file" style="max-width:200px;padding:4px;border:1px solid var(--border-color);border-radius:4px;">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="uploadModalDocument()">Upload & Attach</button>
                 </div>
             </div>
             <div class="modal-actions">

@@ -160,11 +160,10 @@ async function openEditModal(id) {
     document.getElementById('f-role').value = data.role_title;
     document.getElementById('f-status').value = data.status;
 
-    const docSelect = document.getElementById('f-docs');
     const selectedIds = data.document_ids || [];
-    for (let opt of docSelect.options) {
-        opt.selected = selectedIds.includes(parseInt(opt.value));
-    }
+    document.querySelectorAll('.doc-checkbox').forEach(cb => {
+        cb.checked = selectedIds.includes(parseInt(cb.value));
+    });
 
     openModal('app-modal');
 }
@@ -181,13 +180,15 @@ function populateModalSelects() {
         cities.map(c => `<option value="${c.city_id}">${esc(c.city_name)}${c.state_name ? ', ' + c.state_name : ''}</option>`).join('');
     document.getElementById('f-status').innerHTML =
         STATUSES.map(s => `<option value="${s}">${s}</option>`).join('');
-    document.getElementById('f-docs').innerHTML =
-        documents.map(d => `<option value="${d.doc_id}">${esc(d.file_name)}</option>`).join('');
+    document.getElementById('f-docs-checkboxes').innerHTML = documents.length
+        ? documents.map(d => `<label style="display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:4px 0;cursor:pointer;font-size:13px;text-align:left;width:100%;">
+            <input type="checkbox" class="doc-checkbox" value="${d.doc_id}" style="margin:0;flex-shrink:0;width:16px;height:16px;"> <span style="text-align:left;">${esc(d.file_name)}</span>
+          </label>`).join('')
+        : '<span style="color:var(--text-dim);font-size:13px;">No documents uploaded yet.</span>';
 }
 
 async function saveApp() {
-    const docSelect = document.getElementById('f-docs');
-    const docIds = Array.from(docSelect.selectedOptions).map(opt => parseInt(opt.value));
+    const docIds = Array.from(document.querySelectorAll('.doc-checkbox:checked')).map(cb => parseInt(cb.value));
 
     const body = {
         cycle_id: +document.getElementById('f-cycle').value,
@@ -592,12 +593,8 @@ async function viewConnection(id) {
         const p = data.profile;
         document.getElementById('cd-name').textContent = `${p.first_name} ${p.last_name}`;
         
-        if (p.profile_picture) {
-            document.getElementById('cd-avatar').innerHTML = `<img src="storage/profiles/${p.profile_picture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-        } else {
-            document.getElementById('cd-avatar').innerHTML = '';
-            document.getElementById('cd-avatar').textContent = (p.first_name || '?')[0].toUpperCase();
-        }
+        document.getElementById('cd-avatar').innerHTML = '';
+        document.getElementById('cd-avatar').textContent = (p.first_name || '?')[0].toUpperCase();
 
         document.getElementById('cd-email').textContent = p.email;
         let edu = '—';
@@ -653,9 +650,18 @@ async function renderDocumentsPage() {
         return;
     }
     tbody.innerHTML = documents.map(d => {
-        const apps = d.linked_apps
-            ? d.linked_apps.split(', ').map(a => `<span class="doc-app-tag">${esc(a)}</span>`).join('')
-            : '<span class="doc-app-tag none">None</span>';
+        let apps;
+        if (!d.linked_apps) {
+            apps = '<span class="doc-app-tag none">None</span>';
+        } else {
+            const all = d.linked_apps.split(', ');
+            const visible = all.slice(0, 2).map(a => `<span class="doc-app-tag">${esc(a)}</span>`).join('');
+            const rest = all.slice(2).map(a => `<span class="doc-app-tag">${esc(a)}</span>`).join('');
+            const extra = all.length > 2
+                ? `<span class="doc-app-tag doc-app-more" onclick="this.style.display='none';this.nextElementSibling.style.display='contents'">+${all.length - 2} more</span><span style="display:none">${rest}</span>`
+                : '';
+            apps = visible + extra;
+        }
         const canPreview = /\.(pdf|png|jpg|jpeg|gif|webp)$/i.test(d.file_name);
         return `<tr>
             <td><strong>${esc(d.file_name)}</strong></td>
@@ -770,24 +776,26 @@ function initDragSort(tbodyId) {
 async function uploadModalDocument() {
     const fileInput = document.getElementById('modal-doc-file');
     if (!fileInput.files.length) return toast('Select a file to upload', 'error');
-    
+
     const formData = new FormData();
     formData.append('document', fileInput.files[0]);
-    
+
     try {
         const res = await apiFetch('documents.php', { method: 'POST', body: formData });
-        toast('Document uploaded');
+        toast('Document uploaded & attached');
         fileInput.value = '';
-        
+
         documents = await apiFetch('documents.php');
-        const sel = document.getElementById('f-docs');
-        const currentlySelected = Array.from(sel.selectedOptions).map(o => o.value);
-        currentlySelected.push(res.doc_id.toString());
-        
-        sel.innerHTML = documents.map(d => `<option value="${d.doc_id}">${esc(d.file_name)}</option>`).join('');
-        for (let opt of sel.options) {
-            if (currentlySelected.includes(opt.value)) opt.selected = true;
-        }
+        const currentlyChecked = Array.from(document.querySelectorAll('.doc-checkbox:checked')).map(cb => cb.value);
+        currentlyChecked.push(res.doc_id.toString());
+
+        const container = document.getElementById('f-docs-checkboxes');
+        container.innerHTML = documents.map(d => `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:13px;text-align:left;">
+            <input type="checkbox" class="doc-checkbox" value="${d.doc_id}" style="margin:0;flex-shrink:0;"> ${esc(d.file_name)}
+          </label>`).join('');
+        document.querySelectorAll('.doc-checkbox').forEach(cb => {
+            if (currentlyChecked.includes(cb.value)) cb.checked = true;
+        });
     } catch(err) {
         toast('Error uploading', 'error');
     }

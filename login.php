@@ -37,7 +37,7 @@ $mode  = $_GET['mode']  ?? 'login';
                 <label class="form-label">Password</label>
                 <input type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:6px">Sign In</button>
+            <button type="submit" class="btn btn-primary" style="width:50%;margin:6px auto 0;display:block;text-align:center;">Sign In</button>
             <p class="auth-toggle">No account? <a href="#" onclick="toggleMode()">Create one</a></p>
         </form>
 
@@ -62,7 +62,7 @@ $mode  = $_GET['mode']  ?? 'login';
                 <label class="form-label">Password</label>
                 <input type="password" name="password" required placeholder="••••••••" autocomplete="new-password">
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:6px">Create Account</button>
+            <button type="submit" class="btn btn-primary" style="width:50%;margin:6px auto 0;display:block;text-align:center;">Create Account</button>
             <p class="auth-toggle">Already have an account? <a href="#" onclick="toggleMode()">Sign in</a></p>
         </form>
     </div>

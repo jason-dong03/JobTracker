@@ -108,18 +108,12 @@ if ($method === 'PUT' && $id) {
 
     $db->begin_transaction();
     try {
-        // Update non-status fields
         $stmt = $db->prepare(
-            "UPDATE applications SET role_title=?, company_id=?, city_id=?, cycle_id=?
+            "UPDATE applications SET role_title=?, status=?, company_id=?, city_id=?, cycle_id=?
              WHERE application_id=?"
         );
-        $stmt->bind_param('siiii', $d['role_title'], $d['company_id'], $d['city_id'], $d['cycle_id'], $id);
+        $stmt->bind_param('ssiiii', $d['role_title'], $d['status'], $d['company_id'], $d['city_id'], $d['cycle_id'], $id);
         $stmt->execute();
-
-        // Use stored procedure for status (enforces CHECK constraint via procedure)
-        $stmt2 = $db->prepare("CALL update_application_status(?, ?)");
-        $stmt2->bind_param('is', $id, $d['status']);
-        $stmt2->execute();
 
         $stmt_del = $db->prepare("DELETE FROM application_documents WHERE application_id = ?");
         $stmt_del->bind_param('i', $id);
@@ -128,7 +122,8 @@ if ($method === 'PUT' && $id) {
         if (isset($d['document_ids']) && is_array($d['document_ids'])) {
             $stmt_add = $db->prepare("INSERT INTO application_documents (application_id, doc_id) VALUES (?, ?)");
             foreach ($d['document_ids'] as $doc_id) {
-                $stmt_add->bind_param('ii', $id, (int)$doc_id);
+                $did = (int)$doc_id;
+                $stmt_add->bind_param('ii', $id, $did);
                 $stmt_add->execute();
             }
         }
