@@ -1,10 +1,11 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-define('DB_HOST', 'mysql01.cs.virginia.edu');
-define('DB_USER', 'ppf3jn');
-define('DB_PASS', '#OneChina01!');
-define('DB_NAME', 'ppf3jn');
+$_env = parse_ini_file(__DIR__ . '/../.env');
+define('DB_HOST', $_env['DB_HOST']);
+define('DB_USER', $_env['DB_USER']);
+define('DB_PASS', $_env['DB_PASS']);
+define('DB_NAME', $_env['DB_NAME']);
 
 function get_db(): mysqli {
     static $conn = null;

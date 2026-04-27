@@ -6,9 +6,9 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 if (!isset($_SESSION['user_id'])) { http_response_code(401); die(json_encode(['error'=>'Unauthorized'])); }
 
-$db      = get_db();
+$db = get_db();
 $method  = $_SERVER['REQUEST_METHOD'];
-$id      = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $user_id = (int)$_SESSION['user_id'];
 
 if ($method === 'GET' && !$id) {

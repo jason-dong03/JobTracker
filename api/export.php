@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config/db.php';
 if (!isset($_SESSION['user_id'])) { http_response_code(401); die('Unauthorized'); }
 
-$db      = get_db();
+$db = get_db();
 $format  = $_GET['format'] ?? 'json';
 $user_id = (int)$_SESSION['user_id'];
 $where   = !empty($_GET['cycle_id']) ? "AND a.cycle_id = " . (int)$_GET['cycle_id'] : '';

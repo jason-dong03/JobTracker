@@ -56,7 +56,7 @@ $mode  = $_GET['mode']  ?? 'login';
             </div>
             <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+                <input type="email" name="email" required placeholder="you@gmail.com" autocomplete="email">
             </div>
             <div class="form-group">
                 <label class="form-label">Password</label>

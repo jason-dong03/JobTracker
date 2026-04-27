@@ -6,9 +6,9 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 if (!isset($_SESSION['user_id'])) { http_response_code(401); die(json_encode(['error'=>'Unauthorized'])); }
 
-$db      = get_db();
-$method  = $_SERVER['REQUEST_METHOD'];
-$id      = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$db = get_db();
+$method = $_SERVER['REQUEST_METHOD'];
+$id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $user_id = (int)$_SESSION['user_id'];
 
 if ($method === 'GET' && !$id) {
@@ -17,13 +17,13 @@ if ($method === 'GET' && !$id) {
     $types  = 'i';
 
     if (!empty($_GET['cycle_id'])) { $where[] = 'a.cycle_id = ?';  $params[] = (int)$_GET['cycle_id']; $types .= 'i'; }
-    if (!empty($_GET['status']))   { $where[] = 'a.status = ?';    $params[] = $_GET['status'];         $types .= 's'; }
+    if (!empty($_GET['status']))   { $where[] = 'a.status = ?';    $params[] = $_GET['status']; $types .= 's'; }
     if (!empty($_GET['company_id'])){ $where[] = 'a.company_id = ?'; $params[] = (int)$_GET['company_id']; $types .= 'i'; }
 
     $allowed = ['created_at','status','role_title','company_name'];
-    $sort    = in_array($_GET['sort'] ?? '', $allowed) ? $_GET['sort'] : 'created_at';
-    $dir     = ($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
-    $col     = $sort === 'company_name' ? 'co.company_name' : 'a.' . $sort;
+    $sort = in_array($_GET['sort'] ?? '', $allowed) ? $_GET['sort'] : 'created_at';
+    $dir = ($_GET['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+    $col = $sort === 'company_name' ? 'co.company_name' : 'a.' . $sort;
 
     $sql = "SELECT a.application_id, a.role_title, a.status, a.created_at,
                    co.company_name, ac.cycle_name,
@@ -99,23 +99,36 @@ if ($method === 'POST') {
 
 if ($method === 'PUT' && $id) {
     $d = get_input();
+
+    // Verify ownership before touching anything
+    $check = $db->prepare("SELECT 1 FROM submits WHERE application_id = ? AND user_id = ?");
+    $check->bind_param('ii', $id, $user_id);
+    $check->execute();
+    if (!$check->get_result()->fetch_assoc()) json_response(['error' => 'Not found'], 404);
+
     $db->begin_transaction();
     try {
+        // Update non-status fields
         $stmt = $db->prepare(
-            "UPDATE applications SET role_title=?, status=?, company_id=?, city_id=?, cycle_id=?
+            "UPDATE applications SET role_title=?, company_id=?, city_id=?, cycle_id=?
              WHERE application_id=?"
         );
-        $stmt->bind_param('ssiiii', $d['role_title'], $d['status'], $d['company_id'], $d['city_id'], $d['cycle_id'], $id);
+        $stmt->bind_param('siiii', $d['role_title'], $d['company_id'], $d['city_id'], $d['cycle_id'], $id);
         $stmt->execute();
+
+        // Use stored procedure for status (enforces CHECK constraint via procedure)
+        $stmt2 = $db->prepare("CALL update_application_status(?, ?)");
+        $stmt2->bind_param('is', $id, $d['status']);
+        $stmt2->execute();
 
         $stmt_del = $db->prepare("DELETE FROM application_documents WHERE application_id = ?");
         $stmt_del->bind_param('i', $id);
         $stmt_del->execute();
-        
+
         if (isset($d['document_ids']) && is_array($d['document_ids'])) {
             $stmt_add = $db->prepare("INSERT INTO application_documents (application_id, doc_id) VALUES (?, ?)");
             foreach ($d['document_ids'] as $doc_id) {
-                $stmt_add->bind_param('ii', $id, $doc_id);
+                $stmt_add->bind_param('ii', $id, (int)$doc_id);
                 $stmt_add->execute();
             }
         }
@@ -129,8 +142,14 @@ if ($method === 'PUT' && $id) {
 }
 
 if ($method === 'DELETE' && $id) {
-    $stmt = $db->prepare("DELETE FROM applications WHERE application_id = ?");
-    $stmt->bind_param('i', $id);
+    // JOIN with submits ensures only the owner can delete their application
+    $stmt = $db->prepare(
+        "DELETE a FROM applications a
+         JOIN submits s ON a.application_id = s.application_id
+         WHERE a.application_id = ? AND s.user_id = ?"
+    );
+    $stmt->bind_param('ii', $id, $user_id);
     $stmt->execute();
+    if ($stmt->affected_rows === 0) json_response(['error' => 'Not found'], 404);
     json_response(['deleted' => $stmt->affected_rows]);
 }

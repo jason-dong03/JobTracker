@@ -3,13 +3,13 @@ require_once __DIR__ . '/../config/db.php';
 header('Content-Type: application/json');
 if (!isset($_SESSION['user_id'])) { http_response_code(401); die(json_encode(['error'=>'Unauthorized'])); }
 
-$db      = get_db();
+$db = get_db();
 $user_id = (int)$_SESSION['user_id'];
 $conn_id = (int)($_GET['id'] ?? 0);
 
 if (!$conn_id) { json_response(['error' => 'ID required'], 400); }
 
-// Verify connection
+
 $check = $db->prepare("SELECT 1 FROM user_connections WHERE user_id = ? AND connected_user_id = ?");
 $check->bind_param('ii', $user_id, $conn_id);
 $check->execute();
@@ -17,7 +17,7 @@ if (!$check->get_result()->fetch_assoc()) {
     json_response(['error' => 'Not connected'], 403);
 }
 
-// Fetch Profile
+// fetch profile
 $p_stmt = $db->prepare(
     "SELECT u.user_id, u.first_name, u.last_name, u.email, u.created_at,
             p.biography, p.profile_picture, s.school_name, t.major, t.degree_type, t.start_date, t.end_date
@@ -32,13 +32,13 @@ $p_stmt->bind_param('i', $conn_id);
 $p_stmt->execute();
 $profile = $p_stmt->get_result()->fetch_assoc();
 
-// Fetch Cycles
+// fetch cycles
 $c_stmt = $db->prepare("SELECT cycle_id, cycle_name FROM application_cycles WHERE user_id = ? OR user_id IS NULL ORDER BY cycle_id DESC");
 $c_stmt->bind_param('i', $conn_id);
 $c_stmt->execute();
 $cycles = $c_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Fetch Applications
+// fetch applications
 $a_stmt = $db->prepare(
     "SELECT a.application_id, a.role_title, a.status, a.created_at, a.cycle_id,
             co.company_name, ci.city_name, ci.state_name

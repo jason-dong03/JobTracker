@@ -270,7 +270,7 @@ $user_id = (int)$_SESSION['user_id'];
     </main>
 </div>
 
-<!-- Application Modal -->
+<!-- modals -->
 <div id="app-modal" class="modal-overlay">
     <div class="modal">
         <div class="modal-title" id="modal-title">Add Application</div>
@@ -331,7 +331,6 @@ $user_id = (int)$_SESSION['user_id'];
     </div>
 </div>
 
-<!-- Company Modal -->
 <div id="co-modal" class="modal-overlay">
     <div class="modal">
         <div class="modal-title">Add Company</div>
@@ -348,7 +347,6 @@ $user_id = (int)$_SESSION['user_id'];
     </div>
 </div>
 
-<!-- City Modal -->
 <div id="ci-modal" class="modal-overlay">
     <div class="modal">
         <div class="modal-title">Add City</div>
@@ -371,7 +369,6 @@ $user_id = (int)$_SESSION['user_id'];
     </div>
 </div>
 
-<!-- Cycle Modal -->
 <div id="cy-modal" class="modal-overlay">
     <div class="modal">
         <div class="modal-title">Add Cycle</div>

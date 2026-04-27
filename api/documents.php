@@ -3,10 +3,10 @@ require_once __DIR__ . '/../config/db.php';
 header('Content-Type: application/json');
 if (!isset($_SESSION['user_id'])) { http_response_code(401); die(json_encode(['error'=>'Unauthorized'])); }
 
-$db      = get_db();
+$db = get_db();
 $method  = $_SERVER['REQUEST_METHOD'];
 $user_id = (int)$_SESSION['user_id'];
-$id      = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 $upload_dir = __DIR__ . '/../storage/documents/';
 if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
