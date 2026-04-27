@@ -85,7 +85,7 @@ async function renderDashboardApps() {
 
     const data = await apiFetch(`applications.php?${params}`);
     document.getElementById('dash-app-tbody').innerHTML = data.length ? data.map(a => `
-        <tr class="clickable-row" onclick="openEditModal(${a.application_id})">
+        <tr class="clickable-row" draggable="true" onclick="openEditModal(${a.application_id})">
             <td><strong>${esc(a.role_title)}</strong></td>
             <td>${esc(a.company_name)}</td>
             <td>${badge(a.status)}</td>
@@ -100,6 +100,7 @@ async function renderDashboardApps() {
             </td>
         </tr>`).join('') :
         '<tr><td colspan="7" class="empty">No applications yet.</td></tr>';
+    initDragSort('dash-app-tbody');
 }
 
 // apps page
@@ -264,7 +265,7 @@ async function renderCycleApps() {
     if (!currentCycleId) return;
     const data = await apiFetch(`applications.php?cycle_id=${currentCycleId}`);
     document.getElementById('cycle-app-tbody').innerHTML = data.length ? data.map(a => `
-        <tr class="clickable-row" onclick="openEditModal(${a.application_id})">
+        <tr class="clickable-row" draggable="true" onclick="openEditModal(${a.application_id})">
             <td><strong>${esc(a.role_title)}</strong></td>
             <td>${esc(a.company_name)}</td>
             <td>${badge(a.status)}</td>
@@ -278,6 +279,7 @@ async function renderCycleApps() {
             </td>
         </tr>`).join('') :
         '<tr><td colspan="6" class="empty">No applications in this cycle. Click "+ Add Application".</td></tr>';
+    initDragSort('cycle-app-tbody');
 }
 
 function openAddAppInCycle() {
@@ -666,6 +668,42 @@ async function deleteDocument(id) {
     await apiFetch(`documents.php?id=${id}`, { method: 'DELETE' });
     toast('Deleted');
     renderDocumentsPage();
+}
+
+// drag-to-reorder table rows
+let _dragging = null;
+
+function initDragSort(tbodyId) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    tbody.querySelectorAll('tr[draggable="true"]').forEach(row => {
+        row.addEventListener('dragstart', e => {
+            _dragging = row;
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => row.classList.add('dragging'), 0);
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+            _dragging = null;
+        });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (!_dragging || row === _dragging) return;
+            tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+            row.classList.add('drag-over');
+        });
+        row.addEventListener('drop', e => {
+            e.preventDefault();
+            if (!_dragging || _dragging === row) return;
+            const rows = [...tbody.children];
+            const fromIdx = rows.indexOf(_dragging);
+            const toIdx = rows.indexOf(row);
+            if (fromIdx < toIdx) row.after(_dragging);
+            else row.before(_dragging);
+            tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+        });
+    });
 }
 
 async function uploadModalDocument() {
