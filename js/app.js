@@ -344,6 +344,18 @@ async function renderProfile() {
     document.getElementById('p-end').value = d.end_date || '';
 }
 
+function previewProfilePic(input) {
+    const preview = document.getElementById('p-pic-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+}
+
 function toggleEditProfile() {
     const view = document.getElementById('profile-view-mode');
     const edit = document.getElementById('profile-edit-mode');
@@ -634,33 +646,82 @@ async function viewConnection(id) {
 // documents
 async function renderDocumentsPage() {
     documents = await apiFetch('documents.php');
-    document.getElementById('docs-tbody').innerHTML = documents.length ? documents.map(d => `
-        <tr>
+    initDocDropzone();
+    const tbody = document.getElementById('docs-tbody');
+    if (!documents.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">No documents uploaded yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = documents.map(d => {
+        const apps = d.linked_apps
+            ? d.linked_apps.split(', ').map(a => `<span class="doc-app-tag">${esc(a)}</span>`).join('')
+            : '<span class="doc-app-tag none">None</span>';
+        const canPreview = /\.(pdf|png|jpg|jpeg|gif|webp)$/i.test(d.file_name);
+        return `<tr>
             <td><strong>${esc(d.file_name)}</strong></td>
+            <td><div class="doc-app-tags">${apps}</div></td>
             <td>${esc(d.uploaded_at)}</td>
-            <td>
-                <button class="btn btn-danger btn-sm" onclick="deleteDocument(${d.doc_id})">Delete</button>
+            <td style="white-space:nowrap;">
+                <div class="action-cell">
+                    ${canPreview ? `<button class="btn btn-ghost btn-sm" onclick="previewDocument(${d.doc_id}, '${esc(d.file_name)}')">Preview</button>` : ''}
+                    <a class="btn btn-ghost btn-sm" href="api/documents.php?id=${d.doc_id}&download=1">Download</a>
+                    <button class="btn btn-danger btn-sm" onclick="deleteDocument(${d.doc_id})">Delete</button>
+                </div>
             </td>
-        </tr>
-    `).join('') : '<tr><td colspan="3" class="empty">No documents found.</td></tr>';
+        </tr>`;
+    }).join('');
 }
 
-async function uploadDocument(e) {
-    e.preventDefault();
-    const fileInput = document.getElementById('doc-file');
-    if (!fileInput.files.length) return;
-    
-    const formData = new FormData();
-    formData.append('document', fileInput.files[0]);
-    
-    try {
-        await apiFetch('documents.php', { method: 'POST', body: formData });
-        toast('Document uploaded');
-        fileInput.value = '';
-        renderDocumentsPage();
-    } catch(err) {
-        toast('Error uploading', 'error');
+function initDocDropzone() {
+    const dz = document.getElementById('doc-dropzone');
+    if (!dz || dz._initialized) return;
+    dz._initialized = true;
+
+    ['dragenter', 'dragover'].forEach(evt =>
+        dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.add('drag-over'); })
+    );
+    ['dragleave', 'drop'].forEach(evt =>
+        dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.remove('drag-over'); })
+    );
+    dz.addEventListener('drop', handleDocUpload);
+
+    document.getElementById('doc-file').addEventListener('change', handleDocUpload);
+}
+
+async function handleDocUpload(e) {
+    const files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+    if (!files || !files.length) return;
+
+    for (const file of files) {
+        const formData = new FormData();
+        formData.append('document', file);
+        try {
+            await apiFetch('documents.php', { method: 'POST', body: formData });
+            toast(`Uploaded: ${file.name}`);
+        } catch(err) {
+            toast(`Error uploading ${file.name}`, 'error');
+        }
     }
+    const fileInput = document.getElementById('doc-file');
+    if (fileInput) fileInput.value = '';
+    renderDocumentsPage();
+}
+
+function previewDocument(docId, fileName) {
+    const url = `api/documents.php?id=${docId}`;
+    const ext = fileName.split('.').pop().toLowerCase();
+    const contentDiv = document.getElementById('doc-preview-content');
+    document.getElementById('doc-preview-title').textContent = fileName;
+    document.getElementById('doc-download-link').href = url + '&download=1';
+
+    if (ext === 'pdf') {
+        contentDiv.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;border-radius:8px;"></iframe>`;
+    } else if (['png','jpg','jpeg','gif','webp'].includes(ext)) {
+        contentDiv.innerHTML = `<img src="${url}" style="max-width:100%;max-height:100%;display:block;margin:auto;">`;
+    } else {
+        contentDiv.innerHTML = '<div class="empty" style="padding:40px;">Preview not available for this file type.</div>';
+    }
+    openModal('doc-preview-modal');
 }
 
 async function deleteDocument(id) {

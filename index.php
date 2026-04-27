@@ -200,7 +200,8 @@ $user_id = (int)$_SESSION['user_id'];
                     </div>
                     <div class="form-group" style="margin-top:10px;">
                         <label class="form-label">Profile Picture</label>
-                        <input type="file" id="p-pic" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px;">
+                        <img id="p-pic-preview" src="" alt="" style="display:none; width:80px; height:80px; object-fit:cover; border-radius:50%; margin-bottom:8px; border:2px solid var(--border-color);">
+                        <input type="file" id="p-pic" accept="image/*" onchange="previewProfilePic(this)" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px;">
                     </div>
                     <div class="modal-actions" style="margin-top:15px">
                         <button class="btn btn-ghost" type="button" onclick="toggleEditProfile()">Cancel</button>
@@ -251,16 +252,20 @@ $user_id = (int)$_SESSION['user_id'];
         <!-- DOCUMENTS -->
         <div id="page-documents" class="page">
             <div class="page-header"><h1 class="page-title">Documents</h1></div>
-            <div class="subtab-toolbar" style="margin-bottom:20px;">
-                <form id="upload-doc-form" onsubmit="uploadDocument(event)" style="display:flex;gap:10px;align-items:center;">
-                    <input type="file" id="doc-file" required style="padding:6px;border:1px solid var(--border-color);border-radius:4px;">
-                    <button type="submit" class="btn btn-primary btn-sm">Upload</button>
-                </form>
+
+            <div id="doc-dropzone" class="doc-dropzone">
+                <div class="dropzone-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></svg></div>
+                <div class="dropzone-text">Drag & drop files here</div>
+                <div class="dropzone-subtext">or</div>
+                <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('doc-file').click()">Browse Files</button>
+                <input type="file" id="doc-file" style="display:none;" multiple>
+                <div class="dropzone-hint">PDF, DOC, DOCX, PNG, JPG accepted</div>
             </div>
+
             <div class="table-wrap">
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Filename</th><th>Uploaded At</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Filename</th><th>Linked Applications</th><th>Uploaded At</th><th>Actions</th></tr></thead>
                         <tbody id="docs-tbody"></tbody>
                     </table>
                 </div>
@@ -382,6 +387,19 @@ $user_id = (int)$_SESSION['user_id'];
                 <button class="btn btn-primary" type="button" onclick="saveCycle()">Save</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="doc-preview-modal" class="modal-overlay">
+    <div class="modal" style="width:800px;max-width:95vw;height:85vh;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div class="modal-title" id="doc-preview-title" style="margin-bottom:0;">Preview</div>
+            <div style="display:flex;gap:8px;">
+                <a id="doc-download-link" class="btn btn-primary btn-sm" download>Download</a>
+                <button class="btn btn-ghost btn-sm" onclick="closeModal('doc-preview-modal')">Close</button>
+            </div>
+        </div>
+        <div id="doc-preview-content" style="flex:1;overflow:auto;border-radius:8px;background:rgba(0,0,0,0.3);"></div>
     </div>
 </div>
 

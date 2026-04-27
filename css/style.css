@@ -738,6 +738,64 @@ tr.drag-over td {
     border-top: 2px solid rgba(255, 255, 255, 0.55);
 }
 
+/* document drop zone */
+.doc-dropzone {
+    background: var(--glass-bg);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 2px dashed var(--glass-border);
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 24px;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+}
+.doc-dropzone.drag-over {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+}
+.dropzone-icon {
+    margin-bottom: 10px;
+    opacity: 0.6;
+    color: var(--accent);
+}
+.dropzone-text {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.dropzone-subtext {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.dropzone-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 12px;
+}
+
+/* linked app tags */
+.doc-app-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.doc-app-tag {
+    display: inline-block;
+    background: var(--info-bg);
+    color: var(--info);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+.doc-app-tag.none {
+    background: transparent;
+    color: var(--text-dim);
+}
+
 /* tablet */
 @media (max-width: 1024px) {
     .main {
